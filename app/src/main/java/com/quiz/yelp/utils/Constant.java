@@ -1,8 +1,7 @@
 package com.quiz.yelp.utils;
 
 /**
- * Created by Lam Nguyen on 7/4/17.
- * Siclo Mobile company.
+ * Created by lamng on 07/04/17.
  */
 
 public class Constant {

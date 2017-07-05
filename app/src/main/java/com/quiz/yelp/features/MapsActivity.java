@@ -1,6 +1,7 @@
 package com.quiz.yelp.features;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -10,22 +11,24 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.RatingBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.quiz.yelp.R;
-import com.quiz.yelp.YelpApp;
+import com.quiz.yelp.models.Restaurant;
 import com.quiz.yelp.utils.Constant;
 import com.yelp.fusion.client.connection.YelpFusionApi;
 import com.yelp.fusion.client.connection.YelpFusionApiFactory;
 import com.yelp.fusion.client.models.Business;
+import com.yelp.fusion.client.models.Category;
 import com.yelp.fusion.client.models.SearchResponse;
 
 import java.util.ArrayList;
@@ -39,14 +42,14 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener, GoogleMap.InfoWindowAdapter,
+        GoogleMap.OnInfoWindowClickListener, GoogleMap.OnCameraChangeListener {
     private static final String TAG = MapsActivity.class.getSimpleName();
 
     private GoogleMap map;
     private YelpFusionApi yelpFusionApi;
 
-    private List<Marker> markerList = new ArrayList<>();
-    private double latitude, longitude;
+    private Business business;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +57,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         setContentView(R.layout.activity_maps);
 
         thread.start();
-        getListRestaurantsWithLatLong("37.422", "-122.084");
     }
 
     @Override
@@ -85,6 +87,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         map = googleMap;
         map.setMyLocationEnabled(true);
+        map.setInfoWindowAdapter(this);
+        map.setOnInfoWindowClickListener(this);
+        map.setOnCameraChangeListener(this);
 
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -92,7 +97,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             onLocationChanged(location);
         }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, this);
-
     }
 
     private void getListRestaurantsWithLatLong(String lat, String longitude) {
@@ -109,18 +113,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onResponse(Call<SearchResponse> call, Response<SearchResponse> response) {
                 if (response.isSuccessful()) {
-                    CustomInfoWindowAdapter customInfoWindowAdapter = new CustomInfoWindowAdapter();
 
-                    SearchResponse result = response.body();
-                    for (Business item : result.getBusinesses()) {
-                        Log.e(TAG, item.getName() + " ==== " + item.getRating());
-                        map.addMarker(new MarkerOptions()
+                    Marker marker;
+                    for (Business item : response.body().getBusinesses()) {
+                        marker = map.addMarker(new MarkerOptions()
                                 .position(new LatLng(item.getCoordinates().getLatitude(),
                                         item.getCoordinates().getLongitude()))
                                 .title(item.getName())
-                                .snippet(String.valueOf(item.getRating())));
-                        map.setInfoWindowAdapter(customInfoWindowAdapter);
-                        map.setOnInfoWindowClickListener(customInfoWindowAdapter);
+                                .snippet(String.valueOf(item.getLocation().getAddress2())));
+
+                        marker.setTag(item);
                     }
                 } else {
                     // error response, no access to resource?
@@ -138,8 +140,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onLocationChanged(Location location) {
-        latitude = location.getLatitude();
-        longitude = location.getLongitude();
+        double latitude = location.getLatitude();
+        double longitude = location.getLongitude();
         // Creating a LatLng object for the current location
         LatLng latLng = new LatLng(latitude, longitude);
         // Showing the current location in Google Map
@@ -166,46 +168,82 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Log.e(TAG, "onProviderDisabled");
     }
 
-    @SuppressWarnings("WeakerAccess")
-    public class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter, GoogleMap.OnInfoWindowClickListener {
+    // InfoWindow
 
-        private final View view;
+    @BindView(R.id.tvName)
+    TextView tvName;
 
-        @BindView(R.id.tvName)
-        TextView tvName;
+    @BindView(R.id.ratingBar)
+    RatingBar ratingBar;
 
-        @BindView(R.id.tvRatting)
-        TextView tvRatting;
+    @BindView(R.id.tvAddress)
+    TextView tvAddress;
 
-        @BindView(R.id.tvAddress)
-        TextView tvAddress;
+    @SuppressLint("InflateParams")
+    @Override
+    public View getInfoWindow(Marker marker) {
+        View view = getLayoutInflater().inflate(R.layout.custom_info_window, null);
+        ButterKnife.bind(this, view);
 
-        CustomInfoWindowAdapter() {
-            view = getLayoutInflater().inflate(R.layout.custom_info_window, null);
-            ButterKnife.bind(this, view);
+        renderInfoWindow(marker);
+        return view;
+    }
+
+    @Override
+    public View getInfoContents(Marker marker) {
+        return null;
+    }
+
+    private void renderInfoWindow(final Marker marker) {
+        if (marker == null) {
+            return;
         }
-
-        @Override
-        public View getInfoWindow(Marker marker) {
-            renderInfoWindow(marker);
-            return view;
+        business = (Business) marker.getTag();
+        if (business == null) {
+            return;
         }
+        com.yelp.fusion.client.models.Location location = business.getLocation();
+        String address = location.getAddress1()
+                + ", " + location.getAddress2()
+                + ", " + location.getAddress3()
+                + ", " + location.getCity() + ", " + location.getCountry();
 
-        @Override
-        public View getInfoContents(Marker marker) {
-            return null;
-        }
+        tvName.setText(business.getName());
+        ratingBar.setRating((float) business.getRating());
+        tvAddress.setText(address);
+    }
 
-        private void renderInfoWindow(final Marker marker) {
-            tvName.setText(marker.getTitle());
-            tvRatting.setText(marker.getSnippet());
-            tvAddress.setText("Address");
+    @Override
+    public void onInfoWindowClick(Marker marker) {
+        business = (Business) marker.getTag();
+        if (business == null) {
+            return;
         }
+        String thumb = business.getImageUrl();
+        String name = business.getName();
+        double rating = business.getRating();
+        String phone = business.getDisplayPhone();
+        String review = String.valueOf(business.getReviewCount());
 
-        @Override
-        public void onInfoWindowClick(Marker marker) {
-            Toast.makeText(YelpApp.getInstance(),
-                    marker.getTitle() + " === " + marker.getId(), Toast.LENGTH_SHORT).show();
+        List<String> titleCategoryList = getTitleCategoryList(business.getCategories());
+        Restaurant restaurant = new Restaurant(thumb, name, phone, rating, review, titleCategoryList);
+
+        DetailActivity.toActivity(this, restaurant);
+    }
+
+    private List<String> getTitleCategoryList(ArrayList<Category> categoryArrayList) {
+        List<String> titleCategoryList = new ArrayList<>();
+        for (int i = 0; i < categoryArrayList.size(); i++) {
+            titleCategoryList.add(categoryArrayList.get(i).getTitle());
         }
+        return titleCategoryList;
+    }
+
+    @Override
+    public void onCameraChange(CameraPosition cameraPosition) {
+        String latitude = String.valueOf(cameraPosition.target.latitude);
+        String longitude = String.valueOf(cameraPosition.target.longitude);
+
+        getListRestaurantsWithLatLong(latitude, longitude);
     }
 }

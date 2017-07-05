@@ -16,14 +16,13 @@
         android:textSize="14sp"
         android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/tvRatting"
+    <RatingBar
+        android:id="@+id/ratingBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textColor="#ff7f7f7f"
-        android:textSize="14sp" />
+        android:numStars="5"
+        android:stepSize="1.0"
+        style="?android:attr/ratingBarStyleSmall"/>
 
     <TextView
         android:id="@+id/tvAddress"
