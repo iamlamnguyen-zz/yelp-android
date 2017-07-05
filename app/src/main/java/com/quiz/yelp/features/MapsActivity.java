@@ -23,6 +23,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.quiz.yelp.R;
+import com.quiz.yelp.features.detail.DetailActivity;
 import com.quiz.yelp.models.Restaurant;
 import com.quiz.yelp.utils.Constant;
 import com.yelp.fusion.client.connection.YelpFusionApi;

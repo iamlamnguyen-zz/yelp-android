@@ -1,13 +1,11 @@
-package com.quiz.yelp.features;
+package com.quiz.yelp.features.detail;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.EditText;
@@ -17,15 +15,15 @@ import android.widget.RatingBar;
 import com.bumptech.glide.Glide;
 import com.quiz.yelp.R;
 import com.quiz.yelp.models.Restaurant;
+import com.quiz.yelp.utils.Constant;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class DetailActivity extends AppCompatActivity {
+public class DetailActivity extends AppCompatActivity implements DetailContract.View {
     private static final String TAG = DetailActivity.class.getSimpleName();
-    private static final String EXTRA_DATA = "EXTRA_DATA";
 
-    private Restaurant restaurant;
+    private DetailContract.ActionListener detailPresenter;
 
     @BindView(R.id.ivThumb)
     ImageView ivThumb;
@@ -44,7 +42,7 @@ public class DetailActivity extends AppCompatActivity {
 
     public static void toActivity(Activity activity, Restaurant restaurant) {
         Intent intent = new Intent(activity, DetailActivity.class);
-        intent.putExtra(EXTRA_DATA, restaurant);
+        intent.putExtra(Constant.EXTRA_DATA, restaurant);
         activity.startActivity(intent);
     }
 
@@ -54,9 +52,15 @@ public class DetailActivity extends AppCompatActivity {
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
         setContentView(R.layout.activity_detail);
         ButterKnife.bind(this);
-        hasExtras(getIntent());
+        initToolbar();
 
-        toolbar.setTitle(restaurant.getName());
+        detailPresenter = new DetailPresenter();
+        detailPresenter.onCreated(this);
+        hasExtras(getIntent());
+    }
+
+    private void initToolbar() {
+        toolbar.setTitle("Restaurant Detail");
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar == null) {
@@ -64,28 +68,6 @@ public class DetailActivity extends AppCompatActivity {
         }
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowHomeEnabled(true);
-
-        displayRestaurant(restaurant);
-    }
-
-    @SuppressLint("SetTextI18n")
-    private void displayRestaurant(Restaurant restaurant) {
-        if (restaurant == null) {
-            return;
-        }
-        Glide.with(this)
-                .load(restaurant.getThumb())
-                .into(ivThumb);
-        tvName.setText(restaurant.getName());
-        ratingBar.setRating((float) restaurant.getRating());
-        tvPhone.setText(restaurant.getPhone());
-        tvReview.setText(restaurant.getReview());
-
-        if (restaurant.getTitleCategoryList() == null || restaurant.getTitleCategoryList().size() <= 0) {
-            return;
-        }
-        String joinedCategory = TextUtils.join(" #", restaurant.getTitleCategoryList());
-        tvCategories.setText("#" + joinedCategory);
     }
 
     private void hasExtras(Intent intent) {
@@ -93,16 +75,48 @@ public class DetailActivity extends AppCompatActivity {
         if (bundle == null) {
             return;
         }
-        restaurant = bundle.getParcelable(EXTRA_DATA);
+        detailPresenter.onGetResultRestaurant(bundle);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.home:
+            case android.R.id.home:
                 finish();
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void displayImage(String url) {
+        Glide.with(this)
+                .load(url)
+                .into(ivThumb);
+    }
+
+    @Override
+    public void displayNameRestaurant(String name) {
+        tvName.setText(name);
+    }
+
+    @Override
+    public void displayRating(float rating) {
+        ratingBar.setRating(rating);
+    }
+
+    @Override
+    public void displayPhoneNumber(String phone) {
+        tvPhone.setText(phone);
+    }
+
+    @Override
+    public void displayReviewsNumber(String reviews) {
+        tvReview.setText(reviews);
+    }
+
+    @Override
+    public void displayCategories(String categories) {
+        tvCategories.setText(categories);
     }
 }

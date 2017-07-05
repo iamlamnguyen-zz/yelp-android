@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
             }
         } else {
             // Location is already granted
-            startActivity(new Intent(this, MapsActivity.class));
+            startMap();
         }
     }
 
@@ -46,9 +46,14 @@ public class MainActivity extends AppCompatActivity {
         if (ActivityCompat.checkSelfPermission(this, permissions[0]) == PackageManager.PERMISSION_GRANTED) {
             switch (requestCode) {
                 case 1:
-                    startActivity(new Intent(this, MapsActivity.class));
+                    startMap();
                     break;
             }
         }
+    }
+
+    private void startMap() {
+        startActivity(new Intent(this, MapsActivity.class));
+        finish();
     }
 }

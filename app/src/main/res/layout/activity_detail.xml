@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.quiz.yelp.features.DetailActivity">
+    tools:context="com.quiz.yelp.features.detail.DetailActivity">
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar"
@@ -36,9 +36,9 @@
             android:paddingEnd="10dp"
             android:paddingStart="10dp">
 
-
             <android.support.design.widget.TextInputLayout
                 android:id="@+id/layoutName"
+                android:padding="5dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
@@ -64,6 +64,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:numStars="5"
+                android:layout_marginStart="5dp"
                 android:stepSize="1.0"/>
 
 
