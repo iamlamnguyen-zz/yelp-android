@@ -6,6 +6,8 @@ package com.quiz.yelp.utils;
 
 public class Constant {
 
+    public static final int REQUEST_LOCATION = 1;
+
     public static final String EXTRA_DATA = "EXTRA_DATA";
 
     public static final String CLIENT_ID = "CfWUC20zyNeHJmHrLOWclw";

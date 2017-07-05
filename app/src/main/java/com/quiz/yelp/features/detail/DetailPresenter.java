@@ -24,7 +24,7 @@ class DetailPresenter implements DetailContract.ActionListener {
     }
 
     @Override
-    public void onGetResultRestaurant(Bundle bundle) {
+    public void getResultRestaurant(Bundle bundle) {
         Restaurant restaurant = bundle.getParcelable(Constant.EXTRA_DATA);
         if (restaurant == null) {
             return;
@@ -42,6 +42,9 @@ class DetailPresenter implements DetailContract.ActionListener {
     }
 
     private void displayNameRestaurant(String name) {
+        if (name.equals("")) {
+            name = "None";
+        }
         detailView.displayNameRestaurant(name);
     }
 
@@ -50,10 +53,16 @@ class DetailPresenter implements DetailContract.ActionListener {
     }
 
     private void displayPhoneNumber(String phone) {
+        if (phone.equals("")) {
+            phone = "None";
+        }
         detailView.displayPhoneNumber(phone);
     }
 
     private void displayReviewsNumber(String reviews) {
+        if (reviews.equals("")) {
+            reviews = "0";
+        }
         detailView.displayReviewsNumber(reviews);
     }
 

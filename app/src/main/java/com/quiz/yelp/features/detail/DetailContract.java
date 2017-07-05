@@ -28,6 +28,6 @@ interface DetailContract {
 
         void onCreated(DetailContract.View view);
 
-        void onGetResultRestaurant(Bundle bundle);
+        void getResultRestaurant(Bundle bundle);
     }
 }

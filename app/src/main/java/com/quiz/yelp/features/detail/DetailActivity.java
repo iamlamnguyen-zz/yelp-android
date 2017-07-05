@@ -75,7 +75,7 @@ public class DetailActivity extends AppCompatActivity implements DetailContract.
         if (bundle == null) {
             return;
         }
-        detailPresenter.onGetResultRestaurant(bundle);
+        detailPresenter.getResultRestaurant(bundle);
     }
 
     @Override
